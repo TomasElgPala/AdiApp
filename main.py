@@ -1,37 +1,52 @@
 import tkinter as tk
-import empleados
-import compras
+from tkinter import messagebox
+from compras import ComprasUI
+from empleados import EmpleadosUI
 
-# ---- Ventana principal ----
-ventana = tk.Tk()
-ventana.title("AdiApp - Gestión de Adidas")
-ventana.geometry("750x550")
+class MainApp:
+    def __init__(self, root):
+        self.root = root
+        self.root.title("AdiApp - Gestión de Adidas")
+        self.root.geometry("750x550")
+        self.current_frame = None
+        self.show_main_menu()
 
-# Frame donde se mostrará la pantalla actual
-frame_actual = tk.Frame(ventana)
-frame_actual.pack(fill="both", expand=True)
+    def show_main_menu(self):
+        """Muestra el menú principal de la aplicación."""
+        self.limpiar_frame()
+        self.current_frame = tk.Frame(self.root)
+        self.current_frame.pack(fill="both", expand=True)
 
-# ---- Funciones para cambiar de pantalla ----
-def mostrar_menu():
-    limpiar_frame()
-    tk.Label(frame_actual, text="Menú Principal", font=("Arial", 20)).pack(pady=20)
-    tk.Button(frame_actual, text="Empleados", width=20, command=mostrar_empleados).pack(pady=10)
-    tk.Button(frame_actual, text="Compras", width=20, command=mostrar_compras).pack(pady=10)
-    tk.Button(frame_actual, text="Salir", width=20, command=ventana.quit).pack(pady=10)
+        tk.Label(self.current_frame, text="Bienvenido a la Gestión de Empresa", font=("Arial", 20, "bold")).pack(pady=40)
+        
+        button_style = {"font": ("Arial", 14), "padx": 20, "pady": 10, "relief": "raised"}
+        
+        tk.Button(self.current_frame, text="Gestión de Compras", command=self.show_compras, **button_style).pack(pady=10)
+        tk.Button(self.current_frame, text="Gestión de Empleados", command=self.show_empleados, **button_style).pack(pady=10)
+        tk.Button(self.current_frame, text="Salir", command=self.root.quit, **button_style).pack(pady=20)
 
-def mostrar_empleados():
-    limpiar_frame()
-    empleados.crear_ui(frame_actual, mostrar_menu)
+    def show_compras(self):
+        """Muestra la interfaz de gestión de compras."""
+        self.limpiar_frame()
+        self.current_frame = tk.Frame(self.root)
+        self.current_frame.pack(fill="both", expand=True, padx=20, pady=20)
+        ComprasUI(self.current_frame, self.show_main_menu)
 
-def mostrar_compras():
-    limpiar_frame()
-    compras.crear_ui(frame_actual, mostrar_menu)
+    def show_empleados(self):
+        """Muestra la interfaz de gestión de empleados."""
+        self.limpiar_frame()
+        self.current_frame = tk.Frame(self.root)
+        self.current_frame.pack(fill="both", expand=True, padx=20, pady=20)
+        EmpleadosUI(self.current_frame, self.show_main_menu)
 
-def limpiar_frame():
-    for widget in frame_actual.winfo_children():
-        widget.destroy()
+    def limpiar_frame(self):
+        """Elimina todos los widgets del frame actual."""
+        if self.current_frame:
+            for widget in self.current_frame.winfo_children():
+                widget.destroy()
+            self.current_frame.destroy()
 
-# Mostrar menú inicial
-mostrar_menu()
-
-ventana.mainloop()
+if __name__ == "__main__":
+    root = tk.Tk()
+    app = MainApp(root)
+    root.mainloop()
