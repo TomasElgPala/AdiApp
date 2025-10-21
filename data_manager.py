@@ -37,3 +37,4 @@ def load_data(filename):
     except IOError as e:
         print(f"Error al leer del archivo {filename}: {e}")
     return data
+

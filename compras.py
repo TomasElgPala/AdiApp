@@ -1,14 +1,18 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
 from data_manager import save_data, load_data
+# Importamos BG_MODULO para el fondo negro
+from estilos import BG_MODULO, FG_PRIMARY, COLOR_ACCENT, FONT_BASE, FONT_BUTTON, add_logo_header
 
-# Se han cambiado los nombres de los campos a 'sucursal' y 'identificador_producto'
 DATA_FILE = "compras.csv"
 FIELDNAMES = ["id", "fecha", "sucursal", "monto", "identificador_producto", "cliente"]
 
 class ComprasUI:
-    def __init__(self, frame, volver_callback):
-        self.frame = frame
+    def __init__(self, root, volver_callback):
+        # Crear un frame principal que ocupe todo el root y tenga el fondo negro
+        self.frame = ttk.Frame(root, style="Modulo.TFrame") 
+        self.frame.pack(fill="both", expand=True) 
+
         self.volver_callback = volver_callback
         self.compras_data = load_data(DATA_FILE)
         self.next_id = self._get_next_id()
@@ -16,61 +20,99 @@ class ComprasUI:
         self.cargar_datos_en_tabla()
 
     def _get_next_id(self):
-        """Genera el siguiente ID único para una nueva compra."""
+        """Calcula el siguiente ID disponible."""
         if not self.compras_data:
             return 1
         return max(int(c["id"]) for c in self.compras_data) + 1
 
     def crear_ui(self):
-        """Crea y organiza la interfaz de usuario para la gestión de compras."""
-        # Título
-        tk.Label(self.frame, text="Gestión de Compras", font=("Arial", 18, "bold")).pack(pady=10)
-
-        # Contenedor para los campos de entrada
-        input_frame = tk.Frame(self.frame)
-        input_frame.pack(pady=10)
-
-        tk.Label(input_frame, text="Fecha:", font=("Arial", 12)).grid(row=0, column=0, padx=5, pady=2, sticky="e")
-        self.fecha_entry = tk.Entry(input_frame)
-        self.fecha_entry.grid(row=0, column=1, padx=5, pady=2)
-
-        # Se cambia "Proveedor" por "Sucursal"
-        tk.Label(input_frame, text="Sucursal:", font=("Arial", 12)).grid(row=1, column=0, padx=5, pady=2, sticky="e")
-        self.sucursal_entry = tk.Entry(input_frame)
-        self.sucursal_entry.grid(row=1, column=1, padx=5, pady=2)
-
-        tk.Label(input_frame, text="Monto:", font=("Arial", 12)).grid(row=2, column=0, padx=5, pady=2, sticky="e")
-        self.monto_entry = tk.Entry(input_frame)
-        self.monto_entry.grid(row=2, column=1, padx=5, pady=2)
+        """Crea y organiza la interfaz de usuario para la gestión de compras, con estilo negro."""
         
-        # Se cambia "Tipo de Producto" por "Identificador del Producto"
-        tk.Label(input_frame, text="Identificador del Producto:", font=("Arial", 12)).grid(row=3, column=0, padx=5, pady=2, sticky="e")
-        self.identificador_producto_entry = tk.Entry(input_frame)
-        self.identificador_producto_entry.grid(row=3, column=1, padx=5, pady=2)
+        # 🛠️ INICIO DE CORRECCIÓN: Definición de estilos Treeview
+        style = ttk.Style(self.frame)
+        
+        # 1. Definir el estilo principal de la tabla (Treeview) para que no falle.
+        # Hereda del estilo base, pero puedes ajustar colores del texto/fondo del contenido.
+        style.configure("BlackText.Treeview", 
+                        font=("Segoe UI", 10),
+                        rowheight=25,
+                        fieldbackground="white")
+                        
+        # 2. Definir el estilo del encabezado (Heading) con texto negro (FG_PRIMARY)
+        style.configure("BlackText.Treeview.Heading",
+                        font=("Segoe UI", 11, "bold"),
+                        background=COLOR_ACCENT, 
+                        foreground=FG_PRIMARY,   # Texto del encabezado en NEGRO
+                        relief="flat")
+        # 🛠️ FIN DE CORRECCIÓN
+        
+        # Encabezado con el "Logo"
+        add_logo_header(self.frame, "Gestión de Compras (Seguimiento de Pedidos)")
 
-        tk.Label(input_frame, text="Cliente:", font=("Arial", 12)).grid(row=4, column=0, padx=5, pady=2, sticky="e")
-        self.cliente_entry = tk.Entry(input_frame)
-        self.cliente_entry.grid(row=4, column=1, padx=5, pady=2)
+        # Contenedor para los campos de entrada (fondo negro)
+        input_frame = ttk.Frame(self.frame, style="Modulo.TFrame", padding="15")
+        input_frame.pack(pady=15)
 
-        # Botón para agregar compra
-        tk.Button(self.frame, text="Agregar Compra", command=self.agregar_compra).pack(pady=5)
+        # Labels usan estilo Modulo.TLabel (Texto blanco sobre fondo negro)
+        
+        # Fila 0
+        ttk.Label(input_frame, text="Fecha (DD/MM/YYYY):", font=FONT_BASE, style="Modulo.TLabel").grid(row=0, column=0, padx=10, pady=5, sticky="e")
+        self.fecha_entry = ttk.Entry(input_frame, width=30, style="TEntry")
+        self.fecha_entry.grid(row=0, column=1, padx=10, pady=5)
 
-        # Tabla (Treeview) con los nombres de columna actualizados
+        ttk.Label(input_frame, text="Sucursal:", font=FONT_BASE, style="Modulo.TLabel").grid(row=0, column=2, padx=10, pady=5, sticky="e")
+        self.sucursal_entry = ttk.Entry(input_frame, width=30, style="TEntry")
+        self.sucursal_entry.grid(row=0, column=3, padx=10, pady=5)
+
+        # Fila 1
+        ttk.Label(input_frame, text="Monto ($):", font=FONT_BASE, style="Modulo.TLabel").grid(row=1, column=0, padx=10, pady=5, sticky="e")
+        self.monto_entry = ttk.Entry(input_frame, width=30, style="TEntry")
+        self.monto_entry.grid(row=1, column=1, padx=10, pady=5)
+        
+        ttk.Label(input_frame, text="Identificador del Producto:", font=FONT_BASE, style="Modulo.TLabel").grid(row=1, column=2, padx=10, pady=5, sticky="e")
+        self.identificador_producto_entry = ttk.Entry(input_frame, width=30, style="TEntry")
+        self.identificador_producto_entry.grid(row=1, column=3, padx=10, pady=5)
+
+        # Fila 2
+        ttk.Label(input_frame, text="Cliente:", font=FONT_BASE, style="Modulo.TLabel").grid(row=2, column=0, padx=10, pady=5, sticky="e")
+        self.cliente_entry = ttk.Entry(input_frame, width=30, style="TEntry")
+        self.cliente_entry.grid(row=2, column=1, padx=10, pady=5)
+
+        # Botones de acción (fondo negro)
+        button_container = ttk.Frame(self.frame, style="Modulo.TFrame")
+        button_container.pack(pady=10)
+
+        # Botones usan estilo Modulo.TButton (Blanco con texto negro)
+        ttk.Button(button_container, text="Agregar Compra (Pedido)", command=self.agregar_compra, style="Modulo.TButton").pack(side=tk.LEFT, padx=10, ipadx=10)
+        ttk.Button(button_container, text="Borrar Seleccionado", command=self.borrar_compra, style="Modulo.TButton").pack(side=tk.LEFT, padx=10, ipadx=10)
+
+
+        # Tabla (Treeview) para mostrar las compras
         columns = ("ID", "Fecha", "Sucursal", "Monto", "Identificador Producto", "Cliente")
-        self.tabla = ttk.Treeview(self.frame, columns=columns, show="headings")
+        
+        table_frame = ttk.Frame(self.frame, style="Modulo.TFrame")
+        table_frame.pack(pady=10, fill="both", expand=True, padx=20)
+        
+        # 💡 Se asigna el estilo BlackText.Treeview
+        self.tabla = ttk.Treeview(table_frame, columns=columns, show="headings", style="BlackText.Treeview")
+        
+        vsb = ttk.Scrollbar(table_frame, orient="vertical", command=self.tabla.yview)
+        vsb.pack(side='right', fill='y')
+        self.tabla.configure(yscrollcommand=vsb.set)
+
         for col in columns:
             self.tabla.heading(col, text=col)
+            # El ancho se mantiene en 100 como en tu original.
             self.tabla.column(col, width=100, anchor=tk.CENTER)
-        self.tabla.pack(pady=10, fill="both", expand=True)
+            
+        self.tabla.pack(side='left', fill="both", expand=True)
 
-        # Botón para borrar compra
-        tk.Button(self.frame, text="Borrar Compra Seleccionada", command=self.borrar_compra).pack(pady=5)
-
-        # Botón para volver
-        tk.Button(self.frame, text="Volver al Menú Principal", command=self.volver_callback).pack(pady=20)
+        # Botón para volver (Blanco con texto negro)
+        ttk.Button(self.frame, text="< Volver al Menú Principal", command=self.volver_callback, style="Modulo.TButton").pack(pady=20, ipadx=10)
     
     def agregar_compra(self):
-        """Función para agregar una nueva compra a los datos y a la tabla."""
+        """Recoge los datos, valida y agrega una nueva compra."""
+        # ... (Lógica sin cambios)
         fecha = self.fecha_entry.get()
         sucursal = self.sucursal_entry.get()
         monto = self.monto_entry.get()
@@ -78,45 +120,64 @@ class ComprasUI:
         cliente = self.cliente_entry.get()
 
         if not all([fecha, sucursal, monto, identificador_producto, cliente]):
-            messagebox.showwarning("Campos vacíos", "Por favor, completa todos los campos.")
+            messagebox.showerror("Error", "Por favor, completa todos los campos.")
+            return
+
+        try:
+            float(monto)
+        except ValueError:
+            messagebox.showerror("Error", "El monto debe ser un número válido.")
             return
 
         nueva_compra = {
-            "id": self.next_id,
+            "id": str(self.next_id),
             "fecha": fecha,
             "sucursal": sucursal,
             "monto": monto,
             "identificador_producto": identificador_producto,
             "cliente": cliente
         }
+
         self.compras_data.append(nueva_compra)
         save_data(DATA_FILE, self.compras_data, FIELDNAMES)
-        self.tabla.insert("", "end", values=(self.next_id, fecha, sucursal, monto, identificador_producto, cliente))
-        self.next_id += 1
+        self.cargar_datos_en_tabla()
         self.limpiar_campos()
-        messagebox.showinfo("Compra Agregada", "La compra se ha guardado correctamente.")
+        self.next_id = self._get_next_id() # Actualiza el ID
+        messagebox.showinfo("Éxito", f"Compra {nueva_compra['id']} agregada correctamente.")
+
 
     def borrar_compra(self):
-        """Función para borrar la compra seleccionada de los datos y la tabla."""
+        """Elimina la compra seleccionada de la tabla y los datos."""
+        # ... (Lógica sin cambios)
         selected_item = self.tabla.selection()
         if not selected_item:
-            messagebox.showwarning("Ninguna selección", "Por favor, selecciona una compra para borrar.")
+            messagebox.showwarning("Advertencia", "Selecciona una compra para borrar.")
             return
 
-        respuesta = messagebox.askyesno("Confirmar borrado", "¿Estás seguro de que quieres borrar la compra seleccionada?")
-        if respuesta:
-            item_id = self.tabla.item(selected_item, "values")[0]
-            self.compras_data = [c for c in self.compras_data if str(c["id"]) != str(item_id)]
+        item_data = self.tabla.item(selected_item, 'values')
+        compra_id = item_data[0] # El ID es el primer valor
+
+        if messagebox.askyesno("Confirmar Borrado", f"¿Estás seguro de que deseas borrar la compra ID {compra_id}?"):
+            # Filtrar la lista de datos para excluir la compra
+            self.compras_data = [c for c in self.compras_data if c.get("id") != compra_id]
+            
+            # Guardar los datos actualizados
             save_data(DATA_FILE, self.compras_data, FIELDNAMES)
-            self.tabla.delete(selected_item)
-            messagebox.showinfo("Borrado exitoso", "La compra ha sido eliminada.")
+            
+            # Recargar la tabla
+            self.cargar_datos_en_tabla()
+            messagebox.showinfo("Éxito", f"Compra ID {compra_id} borrada correctamente.")
+            self.next_id = self._get_next_id() # Recalcula el siguiente ID
 
     def cargar_datos_en_tabla(self):
-        """Carga los datos existentes en el Treeview."""
+        """Limpia la tabla y la rellena con los datos actuales."""
+        # ... (Lógica sin cambios)
         for item in self.tabla.get_children():
             self.tabla.delete(item)
+            
+        # Insertar nuevos datos
         for compra in self.compras_data:
-            self.tabla.insert("", "end", values=(
+            self.tabla.insert('', 'end', values=(
                 compra.get("id"),
                 compra.get("fecha"),
                 compra.get("sucursal"),
@@ -126,7 +187,8 @@ class ComprasUI:
             ))
 
     def limpiar_campos(self):
-        """Limpia los campos de entrada después de agregar una compra."""
+        """Limpia los campos de entrada de la UI."""
+        # ... (Lógica sin cambios)
         self.fecha_entry.delete(0, tk.END)
         self.sucursal_entry.delete(0, tk.END)
         self.monto_entry.delete(0, tk.END)

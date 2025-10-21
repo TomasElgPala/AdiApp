@@ -1,1 +1,1 @@
-id,fecha,proveedor,monto
+id,fecha,sucursal,monto,identificador_producto,cliente
