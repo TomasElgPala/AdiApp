@@ -1,11 +1,14 @@
 import tkinter as tk
 from tkinter import ttk 
 from PIL import Image, ImageTk
+# 🌟 Importamos el nuevo módulo de Login
+from login import LoginUI 
 from compras import ComprasUI 
 from empleados import EmpleadosUI 
-from estilos import configure_styles, add_logo_header, COLOR_ACCENT
+from estilos import configure_styles, add_logo_header, COLOR_ACCENT, BG_PRIMARY
 
 class MainApp:
+    """Clase principal de la aplicación, maneja la navegación entre módulos."""
     def __init__(self, root):
         self.root = root
         self.root.title("Menú Principal de Gestión")
@@ -29,8 +32,8 @@ class MainApp:
         # Opcional: Para salir de pantalla completa con la tecla ESC
         self.root.bind('<Escape>', self.exit_fullscreen)
         
-        # Mostrar el menú al inicio
-        self.show_main_menu() 
+        # Al inicio, mostramos la pantalla de login.
+        self.show_login() 
 
     def exit_fullscreen(self, event):
         """Permite salir de pantalla completa al presionar ESC."""
@@ -75,7 +78,7 @@ class MainApp:
         self._load_and_place_background(self.root.winfo_width(), self.root.winfo_height())
         
     def limpiar_frame(self):
-        """Limpia todos los widgets excepto la etiqueta de fondo."""
+        """Limpia todos los widgets excepto la etiqueta de fondo y el frame del header."""
         for widget in self.root.winfo_children():
             # No destruir el fondo ni el frame del header si existe
             if widget is self.background_label or widget is self.header_frame: 
@@ -83,15 +86,28 @@ class MainApp:
                 continue
             widget.destroy()
 
+    # --- FUNCIÓN PARA MOSTRAR LOGIN ---
+    def show_login(self):
+        """Muestra la pantalla de inicio de sesión."""
+        self.limpiar_frame()
+        # Destruir el header si existe al ir a Login
+        if self.header_frame:
+            self.header_frame.destroy()
+            self.header_frame = None
+        # Inicia la interfaz de Login. Si es exitoso, llama a show_main_menu
+        LoginUI(self.root, success_callback=self.show_main_menu) 
+    # --- FIN FUNCIÓN ---
+
     # --- FUNCIONES PARA MOSTRAR LOS MÓDULOS ---
 
     def show_main_menu(self):
         """Limpia la pantalla y muestra el header y los botones del menú principal."""
         self.limpiar_frame()
         
-        # 🌟 CORRECCIÓN: Se elimina el argumento 'use_frame=False' que causa TypeError
+        # Destruir el header si existe (aunque limpiar_frame ya lo maneja, es más seguro)
         if self.header_frame:
              self.header_frame.destroy()
+             self.header_frame = None
         
         # add_logo_header ya crea y empaqueta su propio Frame por defecto
         self.header_frame = add_logo_header(self.root, "MENÚ PRINCIPAL DE GESTIÓN")
@@ -125,69 +141,80 @@ class MainApp:
             self.header_frame.destroy()
             self.header_frame = None
 
-        # Contenedor temporal con fondo negro
-        temp_frame = ttk.Frame(self.root, style="Modulo.TFrame")
+        # Contenedor con fondo blanco/claro (BG_PRIMARY)
+        temp_frame = ttk.Frame(self.root, style="TFrame")
         temp_frame.place(relx=0.5, rely=0.5, anchor=tk.CENTER, width=500, height=200)
 
-        # Usamos Modulo.TLabel para texto blanco sobre negro
-        label_temp = ttk.Label(temp_frame, text="MÓDULO FUTURO EN CONSTRUCCIÓN", font=('Arial', 18, 'bold'), style="Modulo.TLabel")
+        # Usamos TLabel para texto negro sobre fondo claro
+        label_temp = ttk.Label(temp_frame, text="MÓDULO FUTURO EN CONSTRUCCIÓN", font=('Segoe UI', 18, 'bold'), style="TLabel")
         label_temp.pack(pady=30)
         
-        # Botón de volver usando Modulo.TButton (Blanco/Negro)
-        ttk.Button(temp_frame, text="< Volver al Menú", command=self.show_main_menu, style="Modulo.TButton").pack(pady=10, ipadx=10)
+        # Botón de volver usando Accent.TButton (Negro/Blanco)
+        ttk.Button(temp_frame, text="< Volver al Menú", command=self.show_main_menu, style="Accent.TButton").pack(pady=10, ipadx=10)
         
     # --- CONFIGURACIÓN DE BOTONES DEL MENÚ PRINCIPAL ---
 
     def _setup_buttons(self):
-        """Crea y coloca los cuatro botones encima del fondo."""
+        """Crea y coloca los cuatro botones principales en una tarjeta de fondo claro."""
         
-        # Contenedor para los botones con fondo negro
-        button_frame = ttk.Frame(self.root, style="Modulo.TFrame", padding=20) 
-        button_frame.place(relx=0.5, rely=0.5, anchor=tk.CENTER)
+        # 🌟 MODIFICACIÓN CLAVE: Cambiamos el estilo de "Modulo.TFrame" (negro) a "TFrame" (claro)
+        # Usamos tk.Frame para tener control del color de fondo si es necesario
+        button_container = tk.Frame(
+            self.root, 
+            bg=BG_PRIMARY, # Usamos el color claro BG_PRIMARY
+            padx=40, 
+            pady=30,
+            highlightbackground=COLOR_ACCENT, 
+            highlightthickness=1 # Agregamos un borde sutil azul
+        ) 
+        button_container.place(relx=0.5, rely=0.5, anchor=tk.CENTER)
+        button_container.lift()
         
-        # Usamos el estilo 'Accent.TButton' (Botón Blanco con texto negro) 
-        # y width=30 para igualar el tamaño.
+        # Título de la tarjeta (opcional)
+        ttk.Label(button_container, text="SELECCIONE UN MÓDULO", font=('Segoe UI', 14, 'bold'), style="TLabel").pack(pady=(0, 20))
+        
+        # Usaremos el estilo 'Accent.TButton' (Fondo Negro, Letra Blanca) para los botones, 
+        # ya que son las acciones principales.
         
         # Botón 1: Compras
         btn_compras = ttk.Button(
-            button_frame, 
+            button_container, 
             text="🛒 Gestión de Compras", 
             command=self.show_compras, 
-            style="Accent.TButton", 
+            style="Accent.TButton", # Fondo Negro, Letra Blanca
             width=30
         )
         btn_compras.pack(pady=10) 
 
         # Botón 2: Empleados
         btn_empleados = ttk.Button(
-            button_frame, 
+            button_container, 
             text="🧑‍💼 Gestión de Empleados", 
             command=self.show_empleados, 
-            style="Accent.TButton",
+            style="Accent.TButton", # Fondo Negro, Letra Blanca
             width=30
         )
         btn_empleados.pack(pady=10)
 
         # Botón 3: Otro Módulo
         btn_otro = ttk.Button(
-            button_frame, 
+            button_container, 
             text="⚙️ Otro Módulo / Configuración", 
             command=self.show_otro_modulo, 
-            style="Accent.TButton",
+            style="Accent.TButton", # Fondo Negro, Letra Blanca
             width=30
         )
         btn_otro.pack(pady=10)
         
-        # 🌟 NUEVO: Botón de Salida 🌟
+        # Botón de Salida (Usamos el estilo Accent.TButton para consistencia)
         btn_exit = ttk.Button(
-            button_frame, 
+            button_container, 
             text="❌ Salir de la Aplicación", 
             command=self.root.destroy, # Función para cerrar la app
-            style="Accent.TButton",
+            style="Accent.TButton", # Fondo Negro, Letra Blanca
             width=30
         )
-        btn_exit.pack(pady=10)
-
+        btn_exit.pack(pady=(20, 0)) # Más espacio arriba
 
 # --- Bucle Principal ---
 if __name__ == "__main__":
