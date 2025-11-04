@@ -1,11 +1,53 @@
 import tkinter as tk
+import sqlite3
 from tkinter import ttk, messagebox
-from data_manager import save_data, load_data
+# from data_manager import save_data, load_data # Ya no se usan
 # Esta línea debe tener TODOS los elementos que usas en el archivo:
 from estilos import BG_MODULO, FG_PRIMARY, COLOR_ACCENT, FONT_BASE, FONT_BUTTON, add_logo_header
 
-DATA_FILE = "empleados.csv"
+# DATA_FILE = "empleados.csv" # Ya no se usa
 FIELDNAMES = ["id", "nombre", "puesto", "fecha_ingreso", "sueldo", "sucursal", "contacto_mail", "celular", "fecha_de_baja"]
+
+# === Manejo Global de la Conexión y Base de Datos ===
+
+# Objeto de conexión global (se reasignará en el bloque principal)
+conexion = None 
+
+try:
+    # Intenta establecer la conexión con la DB
+    conexion = sqlite3.connect('adidas.db')
+    print("Conexión a SQLite establecida con éxito.")
+except sqlite3.Error as e:
+    print(f"Error al conectar a SQLite: {e}")
+    # Si la conexión falla, la aplicación no debería continuar
+    
+
+def iniciar_db(conn):
+    """Asegura que la tabla 'empleados' exista en la base de datos."""
+    cursor = conn.cursor()
+    # Usamos REAL para el sueldo y TEXT para todo lo demás, ID es Primary Key autoincremental
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS empleados (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        nombre TEXT NOT NULL,
+        puesto TEXT,
+        fecha_ingreso TEXT,
+        sueldo REAL,
+        sucursal TEXT,
+        contacto_email TEXT,
+        celular INTEGER,
+        fecha_de_baja TEXT
+    );
+    """)
+    conn.commit()
+    print("Tabla 'empleados' verificada/creada.")
+
+# Aseguramos la inicialización de la tabla al iniciar la conexión
+if conexion:
+    iniciar_db(conexion)
+
+# ======================================================
+
 
 class EmpleadosUI:
     def __init__(self, root, volver_callback):
@@ -14,19 +56,19 @@ class EmpleadosUI:
         self.frame.pack(fill="both", expand=True) 
 
         self.volver_callback = volver_callback
-        self.empleados_data = load_data(DATA_FILE)
-        self.next_id = self._get_next_id()
-        self.crear_ui()
-        self.cargar_datos_en_tabla()
+        # self.empleados_data = load_data(DATA_FILE) # Ya no se carga de CSV
+        # self.next_id = self._get_next_id() # Ya no es necesario
 
-    def _get_next_id(self):
-        """Calcula el siguiente ID disponible."""
-        if not self.empleados_data:
-            return 1
-        return max(int(e["id"]) for e in self.empleados_data) + 1
+        self.crear_ui()
+        # La tabla ahora carga datos directamente de la DB
+        self.cargar_datos_en_tabla() 
+
+    # Se elimina la función _get_next_id, SQLite maneja el ID
 
     def crear_ui(self):
         """Crea y organiza la interfaz de usuario para la gestión de empleados, con estilo negro."""
+        
+        # ... (El código de la interfaz de usuario Tkinter sigue igual) ...
         
         # Encabezado (usará COLOR_ACCENT)
         add_logo_header(self.frame, "Gestión de Empleados")
@@ -100,48 +142,56 @@ class EmpleadosUI:
         # Botón para volver (IMPORTANTE: Usa self.volver_callback para volver al menú principal)
         ttk.Button(self.frame, text="< Volver al Menú Principal", command=self.volver_callback, style="Modulo.TButton").pack(pady=20, ipadx=10)
     
+    
+    # -------------------------------------------------------------
+    # ⬇️ FUNCIONES DE GESTIÓN DE DATOS ADAPTADAS A SQLITE ⬇️
+    # -------------------------------------------------------------
+    
     def agregar_empleado(self):
-        """Recoge los datos, valida y agrega un nuevo empleado."""
+        """Recoge los datos, valida y agrega un nuevo empleado a la DB."""
         nombre = self.nombre_entry.get()
         puesto = self.puesto_entry.get()
         fecha_ingreso = self.fecha_ingreso_entry.get()
-        sueldo = self.sueldo_entry.get()
+        sueldo_str = self.sueldo_entry.get()
         sucursal = self.sucursal_entry.get()
         contacto_mail = self.contacto_mail_entry.get()
         celular = self.celular_entry.get()
-        fecha_de_baja = self.fecha_de_baja_entry.get() or "" # Puede ser vacío
+        fecha_de_baja = self.fecha_de_baja_entry.get() or "" 
 
-        if not all([nombre, puesto, fecha_ingreso, sueldo, sucursal, contacto_mail, celular]):
+        if not all([nombre, puesto, fecha_ingreso, sueldo_str, sucursal, contacto_mail, celular]):
             messagebox.showerror("Error", "Por favor, completa todos los campos obligatorios.")
             return
 
         try:
-            float(sueldo)
+            sueldo = float(sueldo_str)
         except ValueError:
             messagebox.showerror("Error", "El sueldo debe ser un número válido.")
             return
+            
+        cursor = conexion.cursor()
+        
+        # Consulta de inserción con marcadores de posición (?)
+        sql_insert = """
+        INSERT INTO empleados (nombre, puesto, fecha_ingreso, sueldo, sucursal, contacto_mail, celular, fecha_de_baja)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?);
+        """
+        datos = (nombre, puesto, fecha_ingreso, sueldo, sucursal, contacto_mail, celular, fecha_de_baja)
 
-        nuevo_empleado = {
-            "id": str(self.next_id),
-            "nombre": nombre,
-            "puesto": puesto,
-            "fecha_ingreso": fecha_ingreso,
-            "sueldo": sueldo,
-            "sucursal": sucursal,
-            "contacto_mail": contacto_mail,
-            "celular": celular,
-            "fecha_de_baja": fecha_de_baja
-        }
+        try:
+            cursor.execute(sql_insert, datos)
+            conexion.commit() # Guardar los cambios en la DB
+            
+            self.cargar_datos_en_tabla()
+            self.limpiar_campos()
+            messagebox.showinfo("Éxito", f"Empleado {nombre} agregado correctamente.")
 
-        self.empleados_data.append(nuevo_empleado)
-        save_data(DATA_FILE, self.empleados_data, FIELDNAMES)
-        self.cargar_datos_en_tabla()
-        self.limpiar_campos()
-        self.next_id = self._get_next_id() # Actualiza el ID
-        messagebox.showinfo("Éxito", f"Empleado {nombre} agregado con ID {nuevo_empleado['id']}.")
+        except sqlite3.Error as e:
+             messagebox.showerror("Error de DB", f"Ocurrió un error al insertar: {e}")
+        finally:
+            cursor.close()
 
     def borrar_empleado(self):
-        """Elimina el empleado seleccionado de la tabla y los datos."""
+        """Elimina el empleado seleccionado de la DB."""
         selected_item = self.tabla.selection()
         if not selected_item:
             messagebox.showwarning("Advertencia", "Selecciona un empleado para borrar.")
@@ -151,36 +201,49 @@ class EmpleadosUI:
         empleado_id = item_data[0] # El ID es el primer valor
 
         if messagebox.askyesno("Confirmar Borrado", f"¿Estás seguro de que deseas borrar el empleado ID {empleado_id}?"):
-            # Filtrar la lista de datos para excluir el empleado
-            self.empleados_data = [e for e in self.empleados_data if e.get("id") != empleado_id]
+            cursor = conexion.cursor()
             
-            # Guardar los datos actualizados
-            save_data(DATA_FILE, self.empleados_data, FIELDNAMES)
-            
-            # Recargar la tabla
-            self.cargar_datos_en_tabla()
-            messagebox.showinfo("Éxito", f"Empleado ID {empleado_id} borrado correctamente.")
-            self.next_id = self._get_next_id() # Recalcula el siguiente ID
+            try:
+                # Consulta DELETE
+                sql_delete = "DELETE FROM empleados WHERE id = ?;"
+                cursor.execute(sql_delete, (empleado_id,))
+                conexion.commit() # Guardar los cambios
+                
+                # Recargar la tabla
+                self.cargar_datos_en_tabla()
+                messagebox.showinfo("Éxito", f"Empleado ID {empleado_id} borrado correctamente.")
+
+            except sqlite3.Error as e:
+                 messagebox.showerror("Error de DB", f"Ocurrió un error al borrar: {e}")
+            finally:
+                cursor.close()
 
     def cargar_datos_en_tabla(self):
-        """Limpia la tabla y la rellena con los datos actuales."""
+        """Limpia la tabla y la rellena con los datos actuales de la DB."""
         # Limpiar la tabla
         for item in self.tabla.get_children():
             self.tabla.delete(item)
             
-        # Insertar nuevos datos
-        for empleado in self.empleados_data:
-            self.tabla.insert('', 'end', values=(
-                empleado.get("id"),
-                empleado.get("nombre"),
-                empleado.get("puesto"),
-                empleado.get("fecha_ingreso"),
-                empleado.get("sueldo"),
-                empleado.get("sucursal"),
-                empleado.get("contacto_mail"),
-                empleado.get("celular"),
-                empleado.get("fecha_de_baja")
-            ))
+        cursor = conexion.cursor()
+        
+        try:
+            # Consulta SELECT
+            cursor.execute("SELECT * FROM empleados ORDER BY id ASC")
+            empleados = cursor.fetchall()
+            
+            # Insertar nuevos datos
+            for empleado in empleados:
+                # Los valores en 'empleado' son tuplas (id, nombre, puesto, ...)
+                self.tabla.insert('', 'end', values=empleado)
+
+        except sqlite3.Error as e:
+             messagebox.showerror("Error de DB", f"No se pudo cargar la tabla: {e}")
+        finally:
+            cursor.close()
+            
+    # -------------------------------------------------------------
+    # ⬆️ FIN DE FUNCIONES ADAPTADAS ⬆️
+    # -------------------------------------------------------------
 
     def limpiar_campos(self):
         """Limpia los campos de entrada de la UI."""
