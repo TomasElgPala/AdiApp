@@ -181,7 +181,7 @@ class MainApp:
             button_container, 
             text="🛒 Gestión de Compras", 
             command=self.show_compras, 
-            style="Accent.TButton", # Fondo Negro, Letra Blanca
+            style="Accent.TButton", # <--- ¡Aquí está el cambio!
             width=30
         )
         btn_compras.pack(pady=10) 

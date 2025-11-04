@@ -53,7 +53,7 @@ def configure_styles(root):
     # 1. Accent Button (Botón de Acción Principal: Fondo Negro, Letra Blanca)
     style.configure("Accent.TButton", 
                     font=FONT_BUTTON,
-                    foreground=BG_PRIMARY,    # Letra Blanca
+                    foreground=FG_PRIMARY,    # Letra Blanca
                     background=FG_PRIMARY,    # Fondo Negro
                     padding=(15, 10))
     style.map("Accent.TButton",
