@@ -2,8 +2,7 @@ import tkinter as tk
 import sqlite3
 from tkinter import ttk, messagebox
 from datetime import datetime
-import os # Necesario para eliminar la DB en el ejemplo de demostración (opcional)
-
+import os 
 # Importaciones de estilo (asumo que siguen existiendo, aunque no me pasaste el archivo 'estilos.py')
 # from estilos import BG_MODULO, FG_PRIMARY, COLOR_ACCENT, FONT_BASE, FONT_BUTTON, add_logo_header
 
@@ -41,15 +40,21 @@ except sqlite3.Error as e:
     
 
 def iniciar_db(conn):
-    """Crea las tablas Producto, Lote y Control de Calidad si no existen."""
+    """Crea las tablas Producto, Lote y Control de Calidad si no existen.
+       Se han añadido campos detallados al producto (descripción, color, talla, material, planta)."""
     cursor = conn.cursor()
     
-    # 1. Tabla de Productos (Modelado: SKU es clave única)
+    # 1. Tabla de Productos (Modelado: SKU es clave única) - AÑADIDOS CAMPOS CLAVE
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS Productos (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         nombre TEXT NOT NULL,
-        sku TEXT NOT NULL UNIQUE
+        sku TEXT NOT NULL UNIQUE,
+        descripcion TEXT,
+        color TEXT,
+        talla_rango TEXT,
+        material_principal TEXT,
+        planta_produccion TEXT
     );
     """)
 
@@ -96,6 +101,7 @@ class ProduccionUI:
         # Configurar TEntry y TNotebook
         style.configure("TEntry", fieldbackground="white", foreground="black", font=FONT_BASE)
         style.map("Modulo.TButton", background=[('active', COLOR_ACCENT)])
+        style.configure("TCheckbutton", background=BG_MODULO, foreground=FG_PRIMARY) # Estilo para Checkbutton
 
         self.frame = ttk.Frame(root, style="Modulo.TFrame") 
         self.frame.pack(fill="both", expand=True) 
@@ -110,7 +116,7 @@ class ProduccionUI:
     def crear_ui(self):
         """Crea la interfaz de usuario con pestañas para Productos y Lotes/Calidad."""
         
-        add_logo_header(self.frame, "Gestión de Producción y Trazabilidad")
+        add_logo_header(self.frame, "Gestión de Producción y Trazabilidad (Adidas)")
 
         # Usamos un Notebook (Pestañas) para separar las interfaces
         self.notebook = ttk.Notebook(self.frame)
@@ -120,7 +126,7 @@ class ProduccionUI:
         # PESTAÑA 1: GESTIÓN DE PRODUCTOS
         # ---------------------------
         self.frame_productos = ttk.Frame(self.notebook, style="Modulo.TFrame")
-        self.notebook.add(self.frame_productos, text=" Catálogo de Productos ")
+        self.notebook.add(self.frame_productos, text=" Catálogo de Productos y Detalles ")
         self.crear_ui_productos(self.frame_productos)
 
         # ---------------------------
@@ -138,55 +144,120 @@ class ProduccionUI:
     # -------------------------------------------------------------
 
     def crear_ui_productos(self, parent_frame):
-        """Crea los controles y la tabla para la gestión de productos."""
+        """Crea los controles y la tabla para la gestión de productos con campos extendidos."""
         
+        # Contenedor de Entradas
         input_frame = ttk.Frame(parent_frame, style="Modulo.TFrame", padding="15") 
-        input_frame.pack(pady=15)
+        input_frame.pack(pady=15, padx=20, fill='x')
         
+        # Permite que las columnas de entrada se expandan
+        input_frame.columnconfigure(1, weight=1)
+        input_frame.columnconfigure(3, weight=1)
+
+        # --- Fila 0: Nombre y SKU ---
         ttk.Label(input_frame, text="Nombre Producto:", style="Modulo.TLabel").grid(row=0, column=0, padx=10, pady=5, sticky="e")
         self.prod_nombre_entry = ttk.Entry(input_frame, width=30, style="TEntry")
-        self.prod_nombre_entry.grid(row=0, column=1, padx=10, pady=5)
+        self.prod_nombre_entry.grid(row=0, column=1, padx=10, pady=5, sticky="w")
 
-        ttk.Label(input_frame, text="SKU (ID Único):", style="Modulo.TLabel").grid(row=1, column=0, padx=10, pady=5, sticky="e")
+        ttk.Label(input_frame, text="SKU (ID Único):", style="Modulo.TLabel").grid(row=0, column=2, padx=10, pady=5, sticky="e")
         self.prod_sku_entry = ttk.Entry(input_frame, width=30, style="TEntry")
-        self.prod_sku_entry.grid(row=1, column=1, padx=10, pady=5)
+        self.prod_sku_entry.grid(row=0, column=3, padx=10, pady=5, sticky="w")
+
+        # --- Fila 1: Descripción y Color ---
+        ttk.Label(input_frame, text="Descripción:", style="Modulo.TLabel").grid(row=1, column=0, padx=10, pady=5, sticky="e")
+        self.prod_desc_entry = ttk.Entry(input_frame, width=30, style="TEntry")
+        self.prod_desc_entry.grid(row=1, column=1, padx=10, pady=5, sticky="w")
+
+        ttk.Label(input_frame, text="Color:", style="Modulo.TLabel").grid(row=1, column=2, padx=10, pady=5, sticky="e")
+        self.prod_color_entry = ttk.Entry(input_frame, width=30, style="TEntry")
+        self.prod_color_entry.grid(row=1, column=3, padx=10, pady=5, sticky="w")
+
+        # --- Fila 2: Rango Tallas y Material Principal ---
+        ttk.Label(input_frame, text="Rango Tallas/Tallas:", style="Modulo.TLabel").grid(row=2, column=0, padx=10, pady=5, sticky="e")
+        self.prod_talla_entry = ttk.Entry(input_frame, width=30, style="TEntry")
+        self.prod_talla_entry.grid(row=2, column=1, padx=10, pady=5, sticky="w")
+
+        ttk.Label(input_frame, text="Material Principal:", style="Modulo.TLabel").grid(row=2, column=2, padx=10, pady=5, sticky="e")
+        self.prod_material_entry = ttk.Entry(input_frame, width=30, style="TEntry")
+        self.prod_material_entry.grid(row=2, column=3, padx=10, pady=5, sticky="w")
+
+        # --- Fila 3: Planta de Producción ---
+        ttk.Label(input_frame, text="Planta Producción:", style="Modulo.TLabel").grid(row=3, column=0, padx=10, pady=5, sticky="e")
+        self.prod_planta_entry = ttk.Entry(input_frame, width=30, style="TEntry")
+        self.prod_planta_entry.grid(row=3, column=1, padx=10, pady=5, sticky="w")
         
+        # --- Botones ---
         button_container = ttk.Frame(parent_frame, style="Modulo.TFrame") 
         button_container.pack(pady=10)
-        ttk.Button(button_container, text="Agregar Producto", command=self.agregar_producto, style="Modulo.TButton").pack(side=tk.LEFT, padx=10, ipadx=10)
-        ttk.Button(button_container, text="Borrar Seleccionado", command=self.borrar_producto, style="Modulo.TButton").pack(side=tk.LEFT, padx=10, ipadx=10)
+        ttk.Button(button_container, text="➕ Agregar Producto", command=self.agregar_producto, style="Modulo.TButton").pack(side=tk.LEFT, padx=10, ipadx=10)
+        ttk.Button(button_container, text="🗑️ Borrar Seleccionado", command=self.borrar_producto, style="Modulo.TButton").pack(side=tk.LEFT, padx=10, ipadx=10)
 
-        # Tabla de Productos
-        columns = ("ID", "Nombre", "SKU")
+        # --- Tabla de Productos ---
+        columns = ("ID", "Nombre", "SKU", "Descripción", "Color", "Tallas", "Material", "Planta")
         table_frame = ttk.Frame(parent_frame, style="Modulo.TFrame") 
         table_frame.pack(pady=10, fill="both", expand=True, padx=20)
         
         self.tabla_productos = ttk.Treeview(table_frame, columns=columns, show="headings")
-        self.tabla_productos.column("ID", width=50, anchor=tk.CENTER)
+        
+        # Configurar Scrollbar Vertical
+        vsb = ttk.Scrollbar(table_frame, orient="vertical", command=self.tabla_productos.yview)
+        vsb.pack(side='right', fill='y')
+        self.tabla_productos.configure(yscrollcommand=vsb.set)
+        
+        # Configurar Anchos de Columna
+        self.tabla_productos.column("ID", width=40, anchor=tk.CENTER)
+        self.tabla_productos.column("SKU", width=80, anchor=tk.CENTER)
+        self.tabla_productos.column("Nombre", width=120, anchor=tk.W)
+        self.tabla_productos.column("Descripción", width=150, anchor=tk.W)
+        self.tabla_productos.column("Color", width=70, anchor=tk.CENTER)
+        self.tabla_productos.column("Tallas", width=70, anchor=tk.CENTER)
+        self.tabla_productos.column("Material", width=100, anchor=tk.W)
+        self.tabla_productos.column("Planta", width=100, anchor=tk.W)
+        
         for col in columns:
             self.tabla_productos.heading(col, text=col)
             
         self.tabla_productos.pack(side='left', fill="both", expand=True)
-        # Scrollbar opcional...
 
     def agregar_producto(self):
-        """Inserta un nuevo producto en la tabla Productos."""
+        """Inserta un nuevo producto en la tabla Productos con detalles adicionales."""
         nombre = self.prod_nombre_entry.get()
-        sku = self.prod_sku_entry.get().upper() # Usar mayúsculas para SKU
+        sku = self.prod_sku_entry.get().upper()
+        
+        # Nuevos campos
+        descripcion = self.prod_desc_entry.get()
+        color = self.prod_color_entry.get()
+        talla_rango = self.prod_talla_entry.get()
+        material_principal = self.prod_material_entry.get()
+        planta_produccion = self.prod_planta_entry.get()
 
-        if not all([nombre, sku]):
-            messagebox.showerror("Error", "El Nombre y el SKU son obligatorios.")
+        if not all([nombre, sku, descripcion, color, talla_rango, material_principal, planta_produccion]):
+            messagebox.showerror("Error", "Todos los campos, incluyendo los detalles del producto y la planta, son obligatorios.")
             return
 
         cursor = conexion.cursor()
-        sql_insert = "INSERT INTO Productos (nombre, sku) VALUES (?, ?);"
+        # Modificar SQL para incluir todos los campos
+        sql_insert = """
+        INSERT INTO Productos (nombre, sku, descripcion, color, talla_rango, material_principal, planta_produccion) 
+        VALUES (?, ?, ?, ?, ?, ?, ?);
+        """
         
+        datos = (nombre, sku, descripcion, color, talla_rango, material_principal, planta_produccion)
+
         try:
-            cursor.execute(sql_insert, (nombre, sku))
+            cursor.execute(sql_insert, datos)
             conexion.commit()
             self.cargar_productos_en_tabla()
+            
+            # Limpiar campos después del éxito
             self.prod_nombre_entry.delete(0, tk.END)
             self.prod_sku_entry.delete(0, tk.END)
+            self.prod_desc_entry.delete(0, tk.END)
+            self.prod_color_entry.delete(0, tk.END)
+            self.prod_talla_entry.delete(0, tk.END)
+            self.prod_material_entry.delete(0, tk.END)
+            self.prod_planta_entry.delete(0, tk.END)
+            
             messagebox.showinfo("Éxito", f"Producto '{nombre}' (SKU: {sku}) agregado correctamente.")
 
         except sqlite3.IntegrityError:
@@ -219,13 +290,18 @@ class ProduccionUI:
                 messagebox.showerror("Error de DB", f"Ocurrió un error al borrar: {e}")
 
     def cargar_productos_en_tabla(self):
-        """Limpia y rellena la tabla de productos con datos de la DB."""
+        """Limpia y rellena la tabla de productos con datos de la DB, incluyendo todos los detalles."""
         for item in self.tabla_productos.get_children():
             self.tabla_productos.delete(item)
             
         cursor = conexion.cursor()
         try:
-            cursor.execute("SELECT id, nombre, sku FROM Productos ORDER BY nombre ASC")
+            # Modificar SELECT para obtener todos los campos detallados
+            sql_select = """
+            SELECT id, nombre, sku, descripcion, color, talla_rango, material_principal, planta_produccion 
+            FROM Productos ORDER BY nombre ASC
+            """
+            cursor.execute(sql_select)
             productos = cursor.fetchall()
             for prod in productos:
                 self.tabla_productos.insert('', 'end', values=tuple(prod))
@@ -251,7 +327,7 @@ class ProduccionUI:
         self.lote_cantidad_entry = ttk.Entry(lote_frame, width=15, style="TEntry")
         self.lote_cantidad_entry.grid(row=0, column=3, padx=10, pady=5)
 
-        ttk.Button(lote_frame, text="Crear Nuevo Lote", command=self.crear_lote, style="Modulo.TButton").grid(row=0, column=4, padx=10, pady=5, ipadx=10)
+        ttk.Button(lote_frame, text="🏭 Crear Nuevo Lote", command=self.crear_lote, style="Modulo.TButton").grid(row=0, column=4, padx=10, pady=5, ipadx=10)
 
         # Separador entre lotes y calidad
         ttk.Separator(parent_frame, orient='horizontal').pack(fill='x', padx=20, pady=10)
@@ -275,9 +351,9 @@ class ProduccionUI:
         ttk.Label(calidad_frame, text="Aprobado:", style="Modulo.TLabel").grid(row=0, column=6, padx=10, pady=5, sticky="e")
         self.calidad_aprobado_var = tk.BooleanVar()
         ttk.Checkbutton(calidad_frame, text="Sí/No", variable=self.calidad_aprobado_var, 
-                        style="Modulo.TCheckbutton").grid(row=0, column=7, padx=5, pady=5)
+                         style="TCheckbutton").grid(row=0, column=7, padx=5, pady=5)
         
-        ttk.Button(calidad_frame, text="Registrar Calidad", command=self.registrar_medicion_calidad, style="Modulo.TButton").grid(row=0, column=8, padx=10, pady=5, ipadx=10)
+        ttk.Button(calidad_frame, text="📝 Registrar Calidad", command=self.registrar_medicion_calidad, style="Modulo.TButton").grid(row=0, column=8, padx=10, pady=5, ipadx=10)
 
         # Tabla de Lotes (para mostrar trazabilidad y estatus)
         columns = ("ID Lote", "SKU", "Producto", "Cantidad", "Fecha Creación")
@@ -285,6 +361,11 @@ class ProduccionUI:
         table_frame.pack(pady=10, fill="both", expand=True, padx=20)
         
         self.tabla_lotes = ttk.Treeview(table_frame, columns=columns, show="headings")
+
+        vsb_lote = ttk.Scrollbar(table_frame, orient="vertical", command=self.tabla_lotes.yview)
+        vsb_lote.pack(side='right', fill='y')
+        self.tabla_lotes.configure(yscrollcommand=vsb_lote.set)
+        
         self.tabla_lotes.column("ID Lote", width=80, anchor=tk.CENTER)
         self.tabla_lotes.column("SKU", width=100, anchor=tk.CENTER)
         for col in columns:
@@ -429,11 +510,11 @@ class ProduccionUI:
             detalle_text = [f"Controles de Calidad para Lote ID: {lote_id} ({producto_nombre}):\n"]
             
             if not controles:
-                detalle_text.append("   - No hay mediciones de calidad registradas para este lote.")
+                detalle_text.append("   - No hay mediciones de calidad registradas para este lote.")
             else:
                 for control in controles:
                     aprobado = "✅ APROBADO" if control['aprobado'] == 1 else "❌ RECHAZADO"
-                    line = f"   - [{control['timestamp']}] {control['parametro']}: {control['valor']} ({aprobado})"
+                    line = f"   - [{control['timestamp']}] {control['parametro']}: {control['valor']} ({aprobado})"
                     detalle_text.append(line)
                     
             self.calidad_detalle_label.config(text="\n".join(detalle_text))
@@ -449,7 +530,7 @@ class ProduccionUI:
 if __name__ == '__main__':
     # Opcional: Borrar el archivo DB para iniciar desde cero en cada ejecución de prueba
     # if os.path.exists(DB_NAME):
-    #     os.remove(DB_NAME)
+    #     os.remove(DB_NAME)
 
     if conexion:
         root = tk.Tk()

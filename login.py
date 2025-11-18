@@ -31,7 +31,7 @@ class LoginUI:
         # 🌟 MODIFICACIÓN CLAVE: Usamos Login.TFrame (Fondo Blanco) y borde redondeado
         # Usamos tk.Frame y un borde para simular un 'card' limpio.
         login_container = tk.Frame(self.frame, bg="white", padx=50, pady=40, 
-                                   highlightbackground=COLOR_ACCENT, highlightthickness=1) 
+                                highlightbackground=COLOR_ACCENT, highlightthickness=1) 
         login_container.place(relx=0.5, rely=0.5, anchor=tk.CENTER)
         
         # --- NUEVO: Agregar Logo Arriba del Título ---

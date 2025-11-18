@@ -3,7 +3,9 @@ from tkinter import ttk
 from PIL import Image, ImageTk
 # Importamos el nuevo módulo de Producción
 from produccion import ProduccionUI 
-# 🌟 Importamos los módulos (asumidos existentes)
+# 🌟 Importamos el NUEVO módulo de Legal
+from legal import LegalUI 
+# Importamos los módulos (asumidos existentes)
 from login import LoginUI 
 from compras import ComprasUI 
 from empleados import EmpleadosUI 
@@ -97,13 +99,12 @@ class MainApp:
             self.header_frame.destroy()
             self.header_frame = None
         # Inicia la interfaz de Login. Si es exitoso, llama a show_main_menu
-        # Asumo que LoginUI existe y funciona correctamente
         try:
-             LoginUI(self.root, success_callback=self.show_main_menu)
+            LoginUI(self.root, success_callback=self.show_main_menu)
         except NameError:
-             # Si login.py no existe, ir directamente al menú
-             self.show_main_menu() 
-             print("Advertencia: No se pudo importar 'login.py'. Saltando al menú principal.")
+            # Si login.py no existe, ir directamente al menú
+            self.show_main_menu() 
+            print("Advertencia: No se pudo importar 'login.py'. Saltando al menú principal.")
 
     # --- FUNCIONES PARA MOSTRAR LOS MÓDULOS ---
 
@@ -112,8 +113,8 @@ class MainApp:
         self.limpiar_frame()
         
         if self.header_frame:
-             self.header_frame.destroy()
-             self.header_frame = None
+            self.header_frame.destroy()
+            self.header_frame = None
         
         self.header_frame = add_logo_header(self.root, "MENÚ PRINCIPAL DE GESTIÓN")
         self.header_frame.pack(fill='x', side='top') 
@@ -140,7 +141,7 @@ class MainApp:
         EmpleadosUI(self.root, volver_callback=self.show_main_menu) 
 
     def show_produccion(self): 
-        """🌟 NUEVA FUNCIÓN: Inicia la interfaz de ProduccionUI (Trazabilidad y Calidad)."""
+        """NUEVA FUNCIÓN: Inicia la interfaz de ProduccionUI (Trazabilidad y Calidad)."""
         self.limpiar_frame()
         if self.header_frame:
             self.header_frame.destroy()
@@ -148,6 +149,16 @@ class MainApp:
         
         # Llamar al nuevo módulo
         ProduccionUI(self.root, volver_callback=self.show_main_menu)
+        
+    def show_legal(self): 
+        """🌟 FUNCIÓN AGREGADA: Inicia la interfaz de LegalUI (Documentos y Contratos)."""
+        self.limpiar_frame()
+        if self.header_frame:
+            self.header_frame.destroy()
+            self.header_frame = None
+        
+        # Llamar al nuevo módulo legal
+        LegalUI(self.root, volver_callback=self.show_main_menu)
         
     def show_otro_modulo(self): 
         """Función para un módulo de ejemplo."""
@@ -191,7 +202,7 @@ class MainApp:
             text="🛒 Gestión de Compras", 
             command=self.show_compras, 
             style="Accent.TButton", 
-            width=30
+            width=35 # Aumentado el ancho para uniformidad
         )
         btn_compras.pack(pady=10) 
 
@@ -201,28 +212,38 @@ class MainApp:
             text="🧑‍💼 Gestión de Empleados", 
             command=self.show_empleados, 
             style="Accent.TButton", 
-            width=30
+            width=35
         )
         btn_empleados.pack(pady=10)
 
-        # 🌟 NUEVO BOTÓN: Producción y Trazabilidad
+        # Botón 3: Producción y Trazabilidad
         btn_produccion = ttk.Button(
             button_container, 
             text="🏭 Producción y Trazabilidad", 
             command=self.show_produccion, 
             style="Accent.TButton", 
-            width=30
+            width=35
         )
         btn_produccion.pack(pady=10)
         
-        # Botón 3: Otro Módulo
-        btn_otro = ttk.Button(
+        # 🌟 NUEVO BOTÓN: Documentos Legales
+        btn_legal = ttk.Button(
             button_container, 
-            text="⚙️ Otro Módulo / Configuración", 
-            command=self.show_otro_modulo, 
+            text="📜 Documentos Legales y Contratos", 
+            command=self.show_legal, 
             style="Accent.TButton", 
-            width=30
+            width=35
         )
+        btn_legal.pack(pady=10)
+        
+        # Botón 5: Otro Módulo
+        #  btn_otro = ttk.Button(
+        #      button_container, 
+        #      text="⚙️ Otro Módulo / Configuración", 
+        #       command=self.show_otro_modulo, 
+        #     style="Accent.TButton", 
+        #     width=35
+        #  )
         btn_otro.pack(pady=10)
         
         # Botón de Salida 
@@ -231,7 +252,7 @@ class MainApp:
             text="❌ Salir de la Aplicación", 
             command=self.root.destroy, 
             style="Accent.TButton", 
-            width=30
+            width=35
         )
         btn_exit.pack(pady=(20, 0)) 
 
